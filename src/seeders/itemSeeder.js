@@ -1,9 +1,10 @@
 const fetch = require('node-fetch');
 const pool = require('../config/db');
+require('dotenv').config();
 
 // Fetch movies from TMDB
 const fetchMovies = async () => {
-    const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=YOUR_API_KEY&query=jesse%20james`);
+    const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_API_KEY}&query=jesse%20james`);
     const data = await response.json();
     return data.results;
 };
