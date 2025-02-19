@@ -1,4 +1,6 @@
-const pool = require('../config/db');
+const { Sequelize } = require('sequelize'); // Import Sequelize
+const sequelize = require('../config/db'); // Import your Sequelize instance
+const { User, Item, Review } = require('../models');
 
 // Dummy reviews data
 const reviews = [
@@ -10,34 +12,29 @@ const reviews = [
 ];
 
 // Function to get random user and item IDs
-const getRandomId = async (table) => {
-    const result = await pool.query(`SELECT id FROM ${table} ORDER BY RANDOM() LIMIT 1`);
-    return result.rows[0].id;
+const getRandomId = async (model) => {
+    const record = await model.findOne({ order: Sequelize.literal('RANDOM()') });
+    return record.id;
 };
 
 // Seed the reviews table
 const seedReviews = async () => {
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
-        for (const review of reviews) {
-            const userId = await getRandomId('users');
-            const itemId = await getRandomId('items');
-            await client.query(
-                'INSERT INTO reviews (text, rating, userId, itemId) VALUES ($1, $2, $3, $4)',
-                [review.text, review.rating, userId, itemId]
-            );
-        }
-
-        await client.query('COMMIT');
+        await sequelize.transaction(async (transaction) => {
+            for (const review of reviews) {
+                const userId = await getRandomId(User);
+                const itemId = await getRandomId(Item);
+                await Review.create(
+                    { text: review.text, rating: review.rating, userId, itemId },
+                    { transaction }
+                );
+            }
+        });
         console.log('Reviews seeded successfully');
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error seeding reviews:', error);
     } finally {
-        client.release();
+        await sequelize.close();
     }
 };
 

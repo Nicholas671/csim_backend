@@ -1,5 +1,4 @@
-const Item = require('../models/Item');
-const Review = require('../models/Review');
+const { Item, Review } = require('../models');
 
 exports.getAllItems = async (req, res) => {
     try {
@@ -12,7 +11,7 @@ exports.getAllItems = async (req, res) => {
 
 exports.getItemById = async (req, res) => {
     try {
-        const item = await Item.findById(req.params.itemId);
+        const item = await Item.findByPk(req.params.itemId);
         if (!item) {
             return res.status(404).json({ error: 'Item not found' });
         }
@@ -24,7 +23,7 @@ exports.getItemById = async (req, res) => {
 
 exports.getReviewsForItem = async (req, res) => {
     try {
-        const reviews = await Review.findAllByItemId(req.params.itemId);
+        const reviews = await Review.findAll({ where: { itemId: req.params.itemId } });
         res.json(reviews);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch reviews' });

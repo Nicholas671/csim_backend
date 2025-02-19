@@ -32,6 +32,7 @@ const create = async (title, description, averageRating) => {
 };
 
 module.exports = {
+    Item,       // Export the Item model itself
     findAll,
     findById,
     create

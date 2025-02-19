@@ -1,6 +1,29 @@
 const fetch = require('node-fetch');
-const pool = require('../config/db');
+const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    logging: false,
+});
+
+const Item = sequelize.define('Item', {
+    title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    averageRating: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+    },
+}, {
+    tableName: 'items',
+    timestamps: false,
+});
 
 // Fetch movies from TMDB
 const fetchMovies = async () => {
@@ -12,25 +35,23 @@ const fetchMovies = async () => {
 // Seed the items table
 const seedItems = async () => {
     const movies = await fetchMovies();
-    const client = await pool.connect();
 
     try {
-        await client.query('BEGIN');
+        await sequelize.transaction(async (t) => {
+            for (const movie of movies) {
+                await Item.create({
+                    title: movie.title,
+                    description: movie.overview,
+                    averageRating: movie.vote_average,
+                }, { transaction: t });
+            }
+        });
 
-        for (const movie of movies) {
-            await client.query(
-                'INSERT INTO items (title, description, averageRating) VALUES ($1, $2, $3)',
-                [movie.title, movie.overview, movie.vote_average]
-            );
-        }
-
-        await client.query('COMMIT');
         console.log('Items seeded successfully');
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error seeding items:', error);
     } finally {
-        client.release();
+        await sequelize.close();
     }
 };
 

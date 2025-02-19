@@ -1,7 +1,7 @@
 const express = require('express');
 require('dotenv').config();
-const pool = require('./config/db');
-const { User, Item, Review, Comment } = require('./models'); // Import from models/index.js
+const sequelize = require('./config/db'); // Import Sequelize instance
+const { User, Item, Review, Comment } = require('./models/associations'); // Import models with correct path
 
 const authRoutes = require('./routes/authRoutes');
 const itemRoutes = require('./routes/itemRoutes');
@@ -21,7 +21,7 @@ app.use('/api/items/:itemId/reviews/:reviewId/comments', commentRoutes);
 // Initialize function to start the server
 const init = async () => {
     try {
-        await pool.connect();
+        await sequelize.authenticate();
         console.log('Database connected');
 
         const port = process.env.PORT || 3000;

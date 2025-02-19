@@ -1,4 +1,5 @@
-const pool = require('../config/db');
+const { Comment, User, Review } = require('../models');
+const { Sequelize } = require('sequelize'); // Import Sequelize
 
 // Dummy comments data
 const comments = [
@@ -10,34 +11,26 @@ const comments = [
 ];
 
 // Function to get random user and review IDs
-const getRandomId = async (table) => {
-    const result = await pool.query(`SELECT id FROM ${table} ORDER BY RANDOM() LIMIT 1`);
-    return result.rows[0].id;
+const getRandomId = async (model) => {
+    const record = await model.findOne({ order: Sequelize.literal('RANDOM()') });
+    return record.id;
 };
 
 // Seed the comments table
 const seedComments = async () => {
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
         for (const comment of comments) {
-            const userId = await getRandomId('users');
-            const reviewId = await getRandomId('reviews');
-            await client.query(
-                'INSERT INTO comments (text, userId, reviewId) VALUES ($1, $2, $3)',
-                [comment.text, userId, reviewId]
-            );
+            const userId = await getRandomId(User);
+            const reviewId = await getRandomId(Review);
+            await Comment.create({
+                text: comment.text,
+                userId: userId,
+                reviewId: reviewId
+            });
         }
-
-        await client.query('COMMIT');
         console.log('Comments seeded successfully');
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error seeding comments:', error);
-    } finally {
-        client.release();
     }
 };
 

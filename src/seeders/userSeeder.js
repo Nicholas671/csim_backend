@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const pool = require('../config/db');
+const { User } = require('../models'); // Assuming you have a User model defined in your models directory
 
 // Dummy users data
 const users = [
@@ -10,26 +10,17 @@ const users = [
 
 // Seed the users table
 const seedUsers = async () => {
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
         for (const user of users) {
             const hashedPassword = await bcrypt.hash(user.password, 10);
-            await client.query(
-                'INSERT INTO users (username, password) VALUES ($1, $2)',
-                [user.username, hashedPassword]
-            );
+            await User.create({
+                username: user.username,
+                password: hashedPassword,
+            });
         }
-
-        await client.query('COMMIT');
         console.log('Users seeded successfully');
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error seeding users:', error);
-    } finally {
-        client.release();
     }
 };
 

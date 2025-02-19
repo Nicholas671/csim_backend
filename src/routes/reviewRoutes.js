@@ -3,23 +3,24 @@ const router = express.Router();
 const reviewController = require('../controllers/reviewController');
 const authenticateToken = require('../middlewares/authMiddleware');
 
-
-app.get('/api/reviews', (req, res) => {
+// Define routes using the router object, not app
+router.get('/', (req, res) => {
     res.send('Reviews');
 });
-app.post('/api/reviews', (req, res) => {
+
+router.post('/', (req, res) => {
     res.send('Create Review');
 });
-app.put('/api/reviews/:reviewId', (req, res) => {
+
+router.put('/:reviewId', (req, res) => {
     res.send('Update Review');
 });
-app.delete('/api/reviews/:reviewId', (req, res) => {
+
+router.delete('/:reviewId', (req, res) => {
     res.send('Delete Review');
 });
 
-
-
-
+// Use the controller and authentication middleware for specific routes
 router.post('/:itemId/reviews', authenticateToken, reviewController.createReview);
 router.get('/me', authenticateToken, reviewController.getReviewById);
 router.put('/:userId/reviews/:reviewId', authenticateToken, reviewController.updateReview);

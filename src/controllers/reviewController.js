@@ -1,10 +1,15 @@
-const Review = require('../models/Review');
+const { Review } = require('../models');
 
 exports.createReview = async (req, res) => {
     try {
         const { text, rating } = req.body;
         const { itemId } = req.params;
-        const review = await Review.create(text, rating, req.user.id, itemId);
+        const review = await Review.create({
+            text,
+            rating,
+            userId: req.user.id,
+            itemId
+        });
         res.json(review);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create review' });
@@ -13,7 +18,7 @@ exports.createReview = async (req, res) => {
 
 exports.getReviewById = async (req, res) => {
     try {
-        const review = await Review.findById(req.params.reviewId);
+        const review = await Review.findByPk(req.params.reviewId);
         if (!review) {
             return res.status(404).json({ error: 'Review not found' });
         }
@@ -26,7 +31,13 @@ exports.getReviewById = async (req, res) => {
 exports.updateReview = async (req, res) => {
     try {
         const { text, rating } = req.body;
-        const review = await Review.update(req.params.reviewId, text, rating);
+        const review = await Review.findByPk(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({ error: 'Review not found' });
+        }
+        review.text = text;
+        review.rating = rating;
+        await review.save();
         res.json(review);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update review' });
@@ -35,7 +46,11 @@ exports.updateReview = async (req, res) => {
 
 exports.deleteReview = async (req, res) => {
     try {
-        await Review.delete(req.params.reviewId);
+        const review = await Review.findByPk(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({ error: 'Review not found' });
+        }
+        await review.destroy();
         res.json({ message: 'Review deleted' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete review' });

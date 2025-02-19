@@ -5,13 +5,13 @@ const User = require('../models/User');
 exports.register = async (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create(username, hashedPassword);
+    const user = await User.create({ username, password: hashedPassword });
     res.json({ user });
 };
 
 exports.login = async (req, res) => {
     const { username, password } = req.body;
-    const user = await User.findOne(username);
+    const user = await User.findOne({ where: { username } });
     if (!user || !await bcrypt.compare(password, user.password)) {
         return res.status(401).send('Unauthorized');
     }
@@ -20,6 +20,6 @@ exports.login = async (req, res) => {
 };
 
 exports.me = async (req, res) => {
-    const user = await User.findById(req.user.id);
+    const user = await User.findByPk(req.user.id);
     res.json({ user });
 };
